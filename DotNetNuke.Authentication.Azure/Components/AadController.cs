@@ -241,6 +241,17 @@ namespace DotNetNuke.Authentication.Azure.Components
                 if (userClaim == null)
                 {
                     if (Logger.IsDebugEnabled) Logger.Debug($"Can't find '{userIdClaim}' claim on token");
+
+                    //mcavoym 2025-09-24
+                    //attempt to see if we have a "preferred_username" claim and we
+                    //can use that to find the user
+                    userClaim = jwt.Claims.FirstOrDefault(x => x.Type == "preferred_username");
+
+                    if (userClaim == null)
+                    {
+                        if (Logger.IsDebugEnabled) Logger.Debug($"Can't find 'preferred_username' claim on token");
+                        return null;
+                    }
                 }
 
                 var userInfo = GetOrCreateCachedUserInfo(jwt, portalSettings, userClaim);
