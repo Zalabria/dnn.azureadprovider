@@ -250,7 +250,23 @@ namespace DotNetNuke.Authentication.Azure.Components
                     if (userClaim == null)
                     {
                         if (Logger.IsDebugEnabled) Logger.Debug($"Can't find 'preferred_username' claim on token");
-                        return null;
+
+                        userClaim = jwt.Claims.FirstOrDefault(x => x.Type == "email");
+                        if (userClaim == null) 
+                        {
+                            if (Logger.IsDebugEnabled) Logger.Debug($"Can't find 'email' claim on token");
+                            //for debug list what claims we do have
+                            if (Logger.IsDebugEnabled)
+                            {
+                                foreach (var claim in jwt.Claims)
+                                {
+                                    Logger.Debug($"Token has claim: {claim.Type} = {claim.Value}");
+                                }
+                            }
+
+                            return null;
+                        }
+
                     }
                 }
 
@@ -300,6 +316,16 @@ namespace DotNetNuke.Authentication.Azure.Components
                 {
                     // If user doesn't exist, create the user
                     userInfo = userData.ToUserInfo(usernamePrefixEnabled);
+
+                    if (Logger.IsDebugEnabled)
+                    {
+                        Logger.Debug($"Creating new user, username {userInfo.Username}");
+                        Logger.Debug($"Creating new user, display name {userInfo.DisplayName}");
+                        Logger.Debug($"Creating new user, email {userInfo.Email}");
+                        Logger.Debug($"Creating new user, first name {userInfo.FirstName}");
+                        Logger.Debug($"Creating new user, last name {userInfo.LastIPAddress}");
+                    }
+
                     userInfo.PortalID = portalSettings.PortalId;
                     userInfo.Membership.Password = UserController.GeneratePassword();
                     var result = UserController.CreateUser(ref userInfo);
