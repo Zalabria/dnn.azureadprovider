@@ -675,7 +675,8 @@ namespace DotNetNuke.Authentication.Azure.Components
             }
 
             var userIdClaim = Utils.GetUserIdClaim(GetCalculatedPortalId());
-            var userClaim = JwtIdToken.Claims.FirstOrDefault(x => x.Type == userIdClaim);
+            var userClaim = JwtIdToken.Claims.FirstOrDefault(x => x.Type == userIdClaim) ??
+                            JwtIdToken.Claims.FirstOrDefault(c => c.Type == "email");
             if (userClaim == null)
             {
                 if (Logger.IsDebugEnabled)
