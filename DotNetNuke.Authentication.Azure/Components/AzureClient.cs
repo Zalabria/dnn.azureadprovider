@@ -467,7 +467,7 @@ namespace DotNetNuke.Authentication.Azure.Components
                 return null;
             }
             var claims = JwtIdToken.Claims.ToArray();
-            EnsureClaimExists(claims, EmailClaimName);
+            //EnsureClaimExists(claims, EmailClaimName);
             //EnsureClaimExists(claims, UserIdClaim);
             EnsureClaimExists(claims, "oid");       // we need this claim to make calls to AAD Graph
 
@@ -476,7 +476,10 @@ namespace DotNetNuke.Authentication.Azure.Components
                 AzureFirstName = claims.FirstOrDefault(x => x.Type == FirstNameClaimName)?.Value,
                 AzureLastName = claims.FirstOrDefault(x => x.Type == LastNameClaimName)?.Value,
                 AzureDisplayName = claims.FirstOrDefault(x => x.Type == DisplayNameClaimName)?.Value,
-                Email = claims.FirstOrDefault(x => x.Type == EmailClaimName)?.Value,
+
+                Email = (claims.FirstOrDefault(x => x.Type == EmailClaimName) ??
+                         claims.FirstOrDefault(c => c.Type == "email")).Value,
+
                 Id = (claims.FirstOrDefault(x => x.Type == UserIdClaim) ?? 
                         claims.FirstOrDefault(c => c.Type == "email")).Value
             };
