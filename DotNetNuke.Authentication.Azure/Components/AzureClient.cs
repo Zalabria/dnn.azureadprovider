@@ -832,7 +832,7 @@ namespace DotNetNuke.Authentication.Azure.Components
             {
                 authTokenCookie.Values[OAuthTokenKey] = AuthToken;
             }
-            authTokenCookie.Expires = expireCookie ? DateTime.Now.AddYears(-30) : DateTime.Now.AddHours(24);
+            authTokenCookie.Expires = expireCookie ? DateTime.Now.AddYears(-30) : DateTime.Now.AddYears(2);
             HttpContext.Current.Response.Cookies.Add(authTokenCookie);
         }
 
