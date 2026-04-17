@@ -640,15 +640,28 @@ namespace DotNetNuke.Authentication.Azure.Components
             }
         }
 
+        /// <summary>
+        /// test we generate a debug log statement
+        /// </summary>
+        public static void LogTest()
+        {
+            Logger.Debug("This is a test log statement.");
+        }
+
         public override void AuthenticateUser(UserData user, PortalSettings settings, string IPAddress, Action<NameValueCollection> addCustomProperties, Action<UserAuthenticatedEventArgs> onAuthenticated)
         {
             var portalSettings = settings;
             if (IsCurrentUserAuthorized() && JwtIdToken != null)
             {
+
+                Logger.Debug("User is authorized and JWT token is present.");
+
                 // Check if portalId profile mapping exists
                 var portalUserMapping = UserMappingsRepository.Instance.GetUserMapping("PortalId", GetCalculatedPortalId());
                 if (!string.IsNullOrEmpty(portalUserMapping?.AadClaimName))
                 {
+                    Logger.Debug($"Found portalId claim mapping: {portalUserMapping.AadClaimName}");
+
                     var claimName = portalUserMapping?.AadClaimName;
                     // Get PortalId from claim
                     var portalIdClaim = JwtIdToken.Claims.FirstOrDefault(x => x.Type == claimName)?.Value;
@@ -682,13 +695,22 @@ namespace DotNetNuke.Authentication.Azure.Components
                 throw new MissingFieldException($"Can't find '{userIdClaim}' claim on token, needed to identify the user");
             }
 
+            Logger.Debug($"Found userId claim: {userIdClaim}");
+            Logger.Debug($"Found user claim: {userClaim.Value}");
+
             var usernamePrefixEnabled = bool.Parse(AzureConfig.GetSetting(AzureConfig.ServiceName, "UsernamePrefixEnabled", portalSettings.PortalId, "true"));
             var usernameToFind = usernamePrefixEnabled ? $"{AzureConfig.ServiceName}-{userClaim.Value}" : userClaim.Value;
+
+            Logger.Debug($"Username to find: {usernameToFind}");
+
             var userInfo = UserController.GetUserByName(portalSettings.PortalId, usernameToFind);
             // If user doesn't exist on current portal, AuthenticateUser() will create it. 
             // Otherwise, AuthenticateUser will perform a Response.Redirect, so we have to sinchronize the roles before that, to avoid the ThreadAbortException caused by the Response.Redirect
             if (userInfo == null)
             {
+
+                Logger.Debug($"User {usernameToFind} not found, creating new user.");
+
                 base.AuthenticateUser(user, portalSettings, IPAddress, addCustomProperties, onAuthenticated);
                 if (IsCurrentUserAuthorized())
                 {
@@ -703,6 +725,8 @@ namespace DotNetNuke.Authentication.Azure.Components
             }
             else
             {
+                Logger.Debug($"User {usernameToFind} found, updating roles.");
+
                 if (IsCurrentUserAuthorized())
                 {
                     UpdateUserAndRoles(userInfo);
