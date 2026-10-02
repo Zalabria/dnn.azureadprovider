@@ -468,8 +468,8 @@ namespace DotNetNuke.Authentication.Azure.Components
                 return null;
             }
             var claims = JwtIdToken.Claims.ToArray();
-            EnsureClaimExists(claims, EmailClaimName);
-            EnsureClaimExists(claims, UserIdClaim);
+            //EnsureClaimExists(claims, EmailClaimName);
+            //EnsureClaimExists(claims, UserIdClaim);
             EnsureClaimExists(claims, "oid");       // we need this claim to make calls to AAD Graph
 
             var user = new AzureUserData()
@@ -477,8 +477,12 @@ namespace DotNetNuke.Authentication.Azure.Components
                 AzureFirstName = claims.FirstOrDefault(x => x.Type == FirstNameClaimName)?.Value,
                 AzureLastName = claims.FirstOrDefault(x => x.Type == LastNameClaimName)?.Value,
                 AzureDisplayName = claims.FirstOrDefault(x => x.Type == DisplayNameClaimName)?.Value,
-                Email = claims.FirstOrDefault(x => x.Type == EmailClaimName)?.Value,
-                Id = claims.FirstOrDefault(x => x.Type == UserIdClaim).Value
+
+                Email = (claims.FirstOrDefault(x => x.Type == EmailClaimName) ??
+                         claims.FirstOrDefault(c => c.Type == "email")).Value,
+
+                Id = (claims.FirstOrDefault(x => x.Type == UserIdClaim) ?? 
+                        claims.FirstOrDefault(c => c.Type == "email")).Value
             };
 
             // Store checks in variables to increase readability and avoid executing the same logic more than once.
@@ -672,7 +676,8 @@ namespace DotNetNuke.Authentication.Azure.Components
             }
 
             var userIdClaim = Utils.GetUserIdClaim(GetCalculatedPortalId());
-            var userClaim = JwtIdToken.Claims.FirstOrDefault(x => x.Type == userIdClaim);
+            var userClaim = JwtIdToken.Claims.FirstOrDefault(x => x.Type == userIdClaim) ??
+                            JwtIdToken.Claims.FirstOrDefault(c => c.Type == "email");
             if (userClaim == null)
             {
                 if (Logger.IsDebugEnabled)
@@ -841,7 +846,7 @@ namespace DotNetNuke.Authentication.Azure.Components
             {
                 authTokenCookie.Values[OAuthTokenKey] = AuthToken;
             }
-            authTokenCookie.Expires = expireCookie ? DateTime.Now.AddYears(-30) : DateTime.Now.Add(AuthTokenExpiry);
+            authTokenCookie.Expires = expireCookie ? DateTime.Now.AddYears(-30) : DateTime.Now.AddYears(2);
             HttpContext.Current.Response.Cookies.Add(authTokenCookie);
         }
 
